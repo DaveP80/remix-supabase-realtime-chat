@@ -45,7 +45,6 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
           Logout
         </button>
       </div>
-      {JSON.stringify(session)}
       <div className="flex flex-col flex-grow h-0 p-4 overflow-auto bg-blue-50 rounded-md">
         {messages.map((message, idx) => (
           <ChatBubble
