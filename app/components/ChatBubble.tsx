@@ -1,18 +1,47 @@
-import { useOutletContext } from "@remix-run/react";
+import { useOutletContext, Form } from "@remix-run/react";
+import { useEffect, useRef } from "react";
 import type { Message, OutletContext } from "~/types";
 
 interface ChatBubbleProps {
   message: Message;
   isGrouped?: boolean;
+  loginfo: Record<string, number>;
 }
 
-export const ChatBubble = ({ message, isGrouped = false }: ChatBubbleProps) => {
+export const ChatBubble = ({
+  message,
+  isGrouped = false,
+  loginfo,
+}: ChatBubbleProps) => {
   const { session } = useOutletContext<OutletContext>();
 
   const isCurrentUser = session.user.id === message.user_id;
 
   return (
     <div className={`chat ${!isCurrentUser ? "chat-start" : "chat-end"}`}>
+      {isCurrentUser && (
+        <>
+          <Form method="post">
+            <input type="hidden" name="messageId" value={message.id} />
+            <button type="submit">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </Form>
+        </>
+      )}
       {!isGrouped ? (
         <>
           <div className="chat-image avatar">

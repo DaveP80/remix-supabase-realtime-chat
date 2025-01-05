@@ -17,11 +17,15 @@ export const action = async ({ request }: ActionArgs) => {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const { message } = Object.fromEntries(await request.formData());
-  const updatedObject = { content: message, user_id: session?.user.id };
+  const { message, messageId } = Object.fromEntries(await request.formData());
+  if (message) {
+    const updatedObject = { content: message, user_id: session?.user.id };
 
-  await supabase.from("messages").insert([updatedObject]);
-
+    await supabase.from("messages").insert([updatedObject]);
+  }
+  if (messageId) {
+    await supabase.from("messages").delete().eq("id", messageId);
+  }
   return json(null, { headers: response.headers });
 };
 

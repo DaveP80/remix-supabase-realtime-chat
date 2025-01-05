@@ -9,10 +9,12 @@ interface ChatProps {
 
 export const Chat = ({ messages: serverMessages }: ChatProps) => {
   const [messages, setMessages] = useState(serverMessages);
+  const [userHasScrolled, setUserHasScrolled] = useState(false);
 
   const { supabase, session } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const channel = supabase
@@ -27,6 +29,16 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "messages" },
+        (payload) => {
+          const deletedMessage = payload.old as Message;
+          setMessages(
+            messages.filter((message) => message.id !== deletedMessage.id)
+          );
+        }
+      )
       .subscribe();
 
     return () => {
@@ -34,8 +46,24 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
     };
   }, [messages, supabase]);
 
+  useEffect(() => {
+    if (!userHasScrolled && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messages, userHasScrolled]);
+
   const handleLogout = () => {
     supabase.auth.signOut();
+  };
+
+  const handleScroll = () => {
+    if (!chatContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    const isScrolledToBottom =
+      Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
+
+    setUserHasScrolled(!isScrolledToBottom);
   };
 
   return (
@@ -45,9 +73,14 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
           Logout
         </button>
       </div>
-      <div className="flex flex-col flex-grow h-0 p-4 overflow-auto bg-blue-50 rounded-md">
+      <div
+        className="flex flex-col flex-grow h-0 p-4 overflow-auto bg-blue-50 rounded-md"
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+      >
         {messages.map((message, idx) => (
           <ChatBubble
+            loginfo={{ length: messages.length, idx }}
             message={message}
             key={message.id}
             isGrouped={
