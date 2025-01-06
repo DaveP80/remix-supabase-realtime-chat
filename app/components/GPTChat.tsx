@@ -1,13 +1,16 @@
 import { Form, useOutletContext } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
-import type { Message, OutletContext } from "~/types";
-import { ChatBubble } from "./ChatBubble";
+import type { GPTMessage, Message, OutletContext } from "~/types";
+import { GPTChatBubble } from "./GPTChatBubble";
 
 interface ChatProps {
-  messages: Message[];
+  messages: GPTMessage[];
+  message_log: string | null;
 }
 
-export const Chat = ({ messages: serverMessages }: ChatProps) => {
+export const GPTChat = (
+  { messages: serverMessages, message_log: any }: ChatProps
+) => {
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
 
@@ -21,9 +24,9 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
       .channel("*")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages" },
+        { event: "UPDATE", schema: "public", table: "gpt_messages" },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as GPTMessage;
           if (!messages.find((message) => message.id === newMessage.id)) {
             setMessages([...messages, newMessage]);
           }
@@ -31,7 +34,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
       )
       .on(
         "postgres_changes",
-        { event: "DELETE", schema: "public", table: "messages" },
+        { event: "DELETE", schema: "public", table: "gpt_messages" },
         (payload) => {
           const deletedMessage = payload.old as Message;
           setMessages(
@@ -70,7 +73,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
         onScroll={handleScroll}
       >
         {messages.map((message, idx) => (
-          <ChatBubble
+          <GPTChatBubble
             message={message}
             key={message.id}
             isGrouped={
@@ -85,6 +88,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
       <div className="mt-auto mb-5 py-2">
         <Form
           method="post"
+          action="/gpt"
           ref={formRef}
           onSubmit={(e) => {
             e.preventDefault();
@@ -96,7 +100,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
             type="text"
             placeholder="Type here"
             className="input input-bordered w-full"
-            name="message"
+            name="gpt_message"
             ref={inputRef}
           />
         </Form>

@@ -8,12 +8,14 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.2.4",
     "@netlify/functions": "^1.4.0",
     "@remix-run/netlify": "^1.15.0",
     "@remix-run/node": "^1.15.0",
     "@remix-run/react": "^1.15.0",
     "@supabase/auth-helpers-remix": "^0.1.9",
     "@supabase/supabase-js": "^2.21.0",
+    "@xenova/transformers": "^2.17.2",
     "cross-env": "^7.0.3",
     "daisyui": "^2.51.6",
     "isbot": "^3.6.8",

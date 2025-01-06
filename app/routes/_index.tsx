@@ -1,8 +1,9 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useOutletContext } from "@remix-run/react";
+import { useLoaderData, useNavigate, useOutletContext } from "@remix-run/react";
 import { Chat } from "~/components/Chat";
 import { Login } from "~/components/Login";
+import { handleLogout, handleNavigate } from "~/hooks/chat";
 import type { Message, OutletContext } from "~/types";
 import { createSupabaseServerClient } from "~/utils/supabase.server";
 
@@ -40,11 +41,33 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 export default function Index() {
   const { messages } = useLoaderData<typeof loader>();
-  const { session } = useOutletContext<OutletContext>();
+  const { session, supabase } = useOutletContext<OutletContext>();
+  const navigate = useNavigate();
 
   return (
     <div className="container mx-auto md:w-[800px] h-screen">
-      {!session?.user ? <Login /> : <Chat messages={messages as Message[]} />}
+      {!session?.user ? (
+        <Login />
+      ) : (
+        <>
+          <div className="my-2 flex space-x-1">
+            <button
+              className="btn btn-xs btn-error"
+              onClick={() => handleLogout(supabase)}
+            >
+              Logout
+            </button>
+
+            <button
+              className="btn btn-xs btn-error"
+              onClick={() => handleNavigate(navigate, "gpt")}
+            >
+              GPTchat
+            </button>
+          </div>
+          <Chat messages={messages as Message[]} />
+        </>
+      )}
     </div>
   );
 }
