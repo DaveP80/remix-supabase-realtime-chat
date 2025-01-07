@@ -1,17 +1,18 @@
-import { useOutletContext, Form } from "@remix-run/react";
-import type { GPTMessage, OutletContext } from "~/types";
+import { Form } from "@remix-run/react";
+import type { GPTMessage } from "~/types";
 
 interface ChatBubbleProps {
   message: GPTMessage;
   isGrouped?: boolean;
+  key?: number | string;
 }
 
 export const GPTChatBubble = ({
   message,
-  isGrouped = false,
+  isGrouped = false
 }: ChatBubbleProps) => {
 
-  const isCurrentUser = message.is_gpt;
+  const isCurrentUser = message.is_gpt ? true : false;
 
   return (
     <div className={`chat ${isCurrentUser ? "chat-start" : "chat-end"}`}>
@@ -49,14 +50,20 @@ export const GPTChatBubble = ({
           </div>
         </>
       ) : (
-        <div className="chat-image avatar">
-          <div className="w-10"></div>
-        </div>
+        <>
+          <div className="chat-image avatar">
+          </div>
+          <div className="chat-header mb-1">
+            {!isCurrentUser ? "you" : "GPT"}
+            <time className="text-xs opacity-50 ml-1">
+              {new Date(message.created_at).toTimeString().slice(0, 5)}
+            </time>
+          </div>
+        </>
       )}
       <div
-        className={`chat-bubble ${
-          isCurrentUser ? "chat-bubble-primary" : "bg-slate-500"
-        }`}
+        className={`chat-bubble ${isCurrentUser ? "chat-bubble-primary" : "bg-slate-500"
+          }`}
       >
         {message.content}
       </div>

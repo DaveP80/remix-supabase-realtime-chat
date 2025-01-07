@@ -5,18 +5,24 @@ export type OutletContext = {
   session: Session;
 };
 
+type UserData <T> = {
+  user_meta_data: T;
+}
+
 export interface Message {
   id: number;
   content: string;
   user_id: string;
   created_at: string;
-  user_meta_data: {
-    name: string;
-    profile_image: string;
-  };
+  user_meta_data?: {name?: string, profile_image?: string};
 }
 
-export interface GPTMessage extends Omit<Message, "user_meta_data"> {
+export interface GPTMessage extends Message {
   is_gpt: boolean;
 }
+
+export type ActionReturnType =
+  | { summary: string; gpt_message: string }
+  | { summary: "error"; gpt_message: string }
+  | any;
 

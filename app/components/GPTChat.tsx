@@ -1,6 +1,6 @@
 import { Form, useOutletContext } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
-import type { GPTMessage, Message, OutletContext } from "~/types";
+import type { GPTMessage, OutletContext } from "~/types";
 import { GPTChatBubble } from "./GPTChatBubble";
 
 interface ChatProps {
@@ -13,6 +13,7 @@ export const GPTChat = (
 ) => {
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   const { supabase, session } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
@@ -36,14 +37,13 @@ export const GPTChat = (
         "postgres_changes",
         { event: "DELETE", schema: "public", table: "gpt_messages" },
         (payload) => {
-          const deletedMessage = payload.old as Message;
+          const deletedMessage = payload.old as GPTMessage;
           setMessages(
             messages.filter((message) => message.id !== deletedMessage.id)
           );
         }
       )
       .subscribe();
-
     return () => {
       supabase.removeChannel(channel);
     };
@@ -75,7 +75,7 @@ export const GPTChat = (
         {messages.map((message, idx) => (
           <GPTChatBubble
             message={message}
-            key={message.id}
+            key={message?.id}
             isGrouped={
               message.user_id === messages[idx - 1]?.user_id &&
               new Date(message.created_at).getTime() -
@@ -92,8 +92,10 @@ export const GPTChat = (
           ref={formRef}
           onSubmit={(e) => {
             e.preventDefault();
+            const userData = messages.length > 1 && messages.find(item => item?.user_id)?.user_id;
             formRef.current?.submit();
             formRef.current?.reset();
+            setMessages([...messages, {content: inputValue, created_at: new Date().toString(), id: -1, is_gpt: false, user_id: userData?.toString()||""}])
           }}
         >
           <input
@@ -102,6 +104,7 @@ export const GPTChat = (
             className="input input-bordered w-full"
             name="gpt_message"
             ref={inputRef}
+            onChange={(e) => setInputValue(e.target.value)}
           />
         </Form>
       </div>

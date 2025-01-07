@@ -76,8 +76,8 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
             isGrouped={
               message.user_id === messages[idx - 1]?.user_id &&
               new Date(message.created_at).getTime() -
-                new Date(messages[idx - 1]?.created_at).getTime() <
-                60000
+              new Date(messages[idx - 1]?.created_at).getTime() <
+              60000
             }
           />
         ))}

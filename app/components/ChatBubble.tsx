@@ -41,14 +41,14 @@ export const ChatBubble = ({ message, isGrouped = false }: ChatBubbleProps) => {
           <div className="chat-image avatar">
             <div className="w-10 rounded-full">
               <img
-                alt={message.user_meta_data.name}
-                src={message.user_meta_data.profile_image}
+                alt={message?.user_meta_data?.name}
+                src={message?.user_meta_data?.profile_image}
                 referrerPolicy="no-referrer"
               />
             </div>
           </div>
           <div className="chat-header mb-1">
-            {message.user_meta_data.name}
+            {message?.user_meta_data?.name}
             <time className="text-xs opacity-50 ml-1">
               {new Date(message.created_at).toTimeString().slice(0, 5)}
             </time>
