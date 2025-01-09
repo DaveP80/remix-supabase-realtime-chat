@@ -1,16 +1,30 @@
 import { Form } from "@remix-run/react";
+import { ReactInstance, useContext, useEffect } from "react";
+import { GlobalContext } from "~/context/context";
 import type { GPTMessage } from "~/types";
 
 interface ChatBubbleProps {
   message: GPTMessage;
   isGrouped?: boolean;
   key?: number | string;
+  setIsDisabled: (args: boolean) => void;
 }
 
 export const GPTChatBubble = ({
   message,
-  isGrouped = false
+  isGrouped = false,
+  setIsDisabled
 }: ChatBubbleProps) => {
+  const FormContext = useContext(GlobalContext);
+
+  useEffect(() => {
+    if (message.id == -1) {
+      setIsDisabled(true);
+      FormContext?.setPromptArr([...FormContext.promptArr, message.content]);
+    } else {
+      FormContext?.promptArr.length && FormContext?.setPromptArr(FormContext.promptArr.slice(0, FormContext.promptArr.length - 1))
+    }
+  }, []);
 
   const isCurrentUser = message.is_gpt ? true : false;
 

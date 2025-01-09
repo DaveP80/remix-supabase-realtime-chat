@@ -15,6 +15,7 @@ import { createSupabaseServerClient } from "./utils/supabase.server";
 
 import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
+import GlobalContextProvider from "./context/context";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -31,7 +32,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   const supabase = createSupabaseServerClient({ request, response });
 
   const {
-    data: {session}
+    data: { session }
   } = await supabase.auth.getSession();
 
   return json({ env, session }, { headers: response.headers });
@@ -69,7 +70,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet context={{ supabase, session }} />
+        <GlobalContextProvider>
+          <Outlet context={{ supabase, session }} />
+        </GlobalContextProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
