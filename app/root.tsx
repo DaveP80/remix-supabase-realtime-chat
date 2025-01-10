@@ -38,6 +38,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ env, session }, { headers: response.headers });
 };
 
+
 export default function App() {
   const { env, session } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();

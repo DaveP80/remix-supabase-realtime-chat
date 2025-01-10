@@ -15,14 +15,21 @@ export const GPTChat = (
   const FormContext = useContext(GlobalContext);
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [inputValue, setInputValue] = useState( FormContext?.promptArr[FormContext.promptArr.length - 1] || "");
+  const [inputValue, setInputValue] = useState<any>("");
   const [isDisabled, setIsDisabled] = useState(false);
 
   const { supabase, session } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  console.log(FormContext?.promptArr)
+  console.log(FormContext?.promptVal)
+
+  useEffect(() => {
+    if (!messages.find((item) => item.id == -1)){
+      setIsDisabled(false);
+      setInputValue(FormContext?.promptVal);
+    }
+  }, [messages]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -61,6 +68,13 @@ export const GPTChat = (
     }
   }, [messages, userHasScrolled]);
 
+  useEffect(() => {
+    if (isDisabled) {
+      FormContext?.setPromptVal(inputValue || "");
+      setInputValue("");
+    }
+  }, [isDisabled]);
+
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
@@ -87,7 +101,6 @@ export const GPTChat = (
                 new Date(messages[idx - 1]?.created_at).getTime() <
                 60000
             }
-            setIsDisabled={setIsDisabled}
           />
         ))}
       </div>
@@ -97,7 +110,7 @@ export const GPTChat = (
           action="/gpt"
           ref={formRef}
           onSubmit={(e) => {
-            if (isDisabled) {
+            if (isDisabled || inputValue == "") {
               e.preventDefault();
               return;
             }
@@ -106,6 +119,7 @@ export const GPTChat = (
             formRef.current?.submit();
             formRef.current?.reset();
             setMessages([...messages, {content: inputValue, created_at: new Date().toString(), id: -1, is_gpt: false, user_id: userData?.toString()||""}])
+            setIsDisabled(true);
           }}
           
         >
