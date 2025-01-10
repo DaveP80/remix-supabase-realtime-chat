@@ -1,35 +1,25 @@
-import { Form, useNavigation, useOutletContext } from "@remix-run/react";
+import { Form, useOutletContext } from "@remix-run/react";
 import { useContext, useEffect, useRef, useState } from "react";
 import type { GPTMessage, OutletContext } from "~/types";
 import { GPTChatBubble } from "./GPTChatBubble";
-import { GlobalContext } from "~/context/context";
 
 interface ChatProps {
   messages: GPTMessage[];
   message_log: string | null;
 }
 
-export const GPTChat = (
-  { messages: serverMessages, message_log: any }: ChatProps
-) => {
-  const FormContext = useContext(GlobalContext);
+export const GPTChat = ({
+  messages: serverMessages,
+  message_log: any,
+}: ChatProps) => {
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
   const [inputValue, setInputValue] = useState<any>("");
   const [isDisabled, setIsDisabled] = useState(false);
-
   const { supabase, session } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  console.log(FormContext?.promptVal)
-
-  useEffect(() => {
-    if (!messages.find((item) => item.id == -1)){
-      setIsDisabled(false);
-      setInputValue(FormContext?.promptVal);
-    }
-  }, [messages]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -69,11 +59,18 @@ export const GPTChat = (
   }, [messages, userHasScrolled]);
 
   useEffect(() => {
-    if (isDisabled) {
-      FormContext?.setPromptVal(inputValue || "");
-      setInputValue("");
+    if (!messages.find((item) => item.id == -1)) {
+      setIsDisabled(false);
+      const ch = localStorage?.getItem(`${session.user.id}`);
+      setInputValue(ch);
     }
-  }, [isDisabled]);
+  }, [messages]);
+
+  useEffect(() => {
+    if (isDisabled) {
+      localStorage.setItem(`${session?.user.id}`, inputValue);
+    }
+  }, [inputValue]);
 
   const handleScroll = () => {
     if (!chatContainerRef.current) return;
@@ -115,13 +112,25 @@ export const GPTChat = (
               return;
             }
             e.preventDefault();
-            const userData = messages.length > 1 && messages.find(item => item?.user_id)?.user_id;
+            const userData =
+              messages.length > 1 &&
+              messages.find((item) => item?.user_id)?.user_id;
             formRef.current?.submit();
             formRef.current?.reset();
-            setMessages([...messages, {content: inputValue, created_at: new Date().toString(), id: -1, is_gpt: false, user_id: userData?.toString()||""}])
+            setInputValue("");
+            setMessages([
+              ...messages,
+              {
+                content: inputValue,
+                created_at: new Date().toString(),
+                id: -1,
+                is_gpt: false,
+                user_id: userData?.toString() || "",
+              },
+            ]);
             setIsDisabled(true);
+            localStorage.setItem(`${session?.user.id}`, "");
           }}
-          
         >
           <input
             type="text"

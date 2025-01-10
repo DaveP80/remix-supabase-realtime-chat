@@ -23,6 +23,6 @@ export interface GPTMessage extends Message {
 
 export type ActionReturnType =
   | { summary: string; gpt_message: string }
-  | { summary: "error"; gpt_message: string }
+  | { summary: null; gpt_message: string }
   | any;
 

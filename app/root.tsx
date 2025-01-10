@@ -15,7 +15,6 @@ import { createSupabaseServerClient } from "./utils/supabase.server";
 
 import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
-import GlobalContextProvider from "./context/context";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -32,12 +31,11 @@ export const loader = async ({ request }: LoaderArgs) => {
   const supabase = createSupabaseServerClient({ request, response });
 
   const {
-    data: { session }
+    data: { session },
   } = await supabase.auth.getSession();
 
   return json({ env, session }, { headers: response.headers });
 };
-
 
 export default function App() {
   const { env, session } = useLoaderData<typeof loader>();
@@ -57,6 +55,12 @@ export default function App() {
         revalidate();
       }
     });
+    if (session?.user) {
+      const inputStor = localStorage.getItem(`${session.user.id}`);
+      if (!inputStor) {
+        localStorage.setItem(`${session.user.id}`, "");
+      }
+    }
     return () => {
       subscription.unsubscribe();
     };
@@ -71,9 +75,7 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <GlobalContextProvider>
           <Outlet context={{ supabase, session }} />
-        </GlobalContextProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

@@ -53,11 +53,10 @@ export default function Index() {
           <div className="my-2 flex space-x-1">
             <button
               className="btn btn-xs btn-error"
-              onClick={() => handleLogout(supabase)}
+              onClick={() => handleLogout(supabase, session, navigate)}
             >
               Logout
             </button>
-
             <button
               className="btn btn-xs btn-error"
               onClick={() => handleNavigate(navigate, "gpt")}

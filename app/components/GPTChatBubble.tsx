@@ -1,6 +1,4 @@
 import { Form } from "@remix-run/react";
-import { ReactInstance, useContext, useEffect } from "react";
-import { GlobalContext } from "~/context/context";
 import type { GPTMessage } from "~/types";
 
 interface ChatBubbleProps {
@@ -13,7 +11,6 @@ export const GPTChatBubble = ({
   message,
   isGrouped = false,
 }: ChatBubbleProps) => {
-  const FormContext = useContext(GlobalContext);
 
   const isCurrentUser = message.is_gpt ? true : false;
 

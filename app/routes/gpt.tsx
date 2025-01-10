@@ -5,21 +5,25 @@ import {
   useNavigate,
   useOutletContext,
 } from "@remix-run/react";
-import type { ActionFunctionArgs } from "react-router";
+import { redirect, type ActionFunctionArgs } from "react-router";
 import { GPTChat } from "~/components/GPTChat";
 import { Login } from "~/components/Login";
 import { handleLogout, handleNavigate } from "~/hooks/chat";
-import type { ActionReturnType, GPTMessage, Message, OutletContext } from "~/types";
+import type { ActionReturnType, GPTMessage, OutletContext } from "~/types";
 import { generateSummary } from "~/utils/summarizer.server";
 import { createSupabaseServerClient } from "~/utils/supabase.server";
 
-export async function action({ request }: ActionFunctionArgs): Promise<ActionReturnType> {
+export async function action({
+  request,
+}: ActionFunctionArgs): Promise<ActionReturnType> {
   const response = new Response();
   const supabase = createSupabaseServerClient({ request, response });
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const { gpt_message, messageId } = Object.fromEntries(await request.formData());
+  const { gpt_message, messageId } = Object.fromEntries(
+    await request.formData()
+  );
   // Check if chart_data exists in form data
   try {
     if (gpt_message) {
@@ -32,7 +36,7 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRet
         return json({ summary, gpt_message }, { headers: response.headers });
       } else {
         return json(
-          { summary: "error", gpt_message },
+          { summary: null, gpt_message },
           { headers: response.headers }
         );
       }
@@ -44,10 +48,7 @@ export async function action({ request }: ActionFunctionArgs): Promise<ActionRet
   } catch (e) {
     console.log(e);
   }
-  return json(
-    { summary: "error", gpt_message },
-    { headers: response.headers }
-  );
+  return json({ summary: "error", gpt_message }, { headers: response.headers });
 }
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -55,6 +56,13 @@ export const loader = async ({ request }: LoaderArgs) => {
   const supabase = createSupabaseServerClient({ request, response });
 
   const { data } = await supabase.from("gpt_messages").select("*");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    throw redirect("/");
+  }
 
   return json({ gpt_messages: data ?? [] }, { headers: response.headers });
 };
@@ -75,11 +83,10 @@ const Index = () => {
           <div className="my-2 flex space-x-1">
             <button
               className="btn btn-xs btn-error"
-              onClick={() => handleLogout(supabase)}
+              onClick={() => handleLogout(supabase, session, navigate)}
             >
               Logout
             </button>
-
             <button
               className="btn btn-xs btn-error"
               onClick={() => handleNavigate(navigate, "")}
@@ -89,7 +96,7 @@ const Index = () => {
           </div>
           <GPTChat
             messages={gpt_messages as GPTMessage[]}
-            message_log={summary === "error" ? gpt_message : null}
+            message_log={summary && gpt_message}
           ></GPTChat>
         </>
       )}

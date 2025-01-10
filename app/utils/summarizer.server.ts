@@ -1,7 +1,6 @@
 import { pipeline } from "@huggingface/transformers";
 
 let summarizer: any = null;
-
 // Initialize the model
 async function initializeSummarizer() {
   if (!summarizer) {
