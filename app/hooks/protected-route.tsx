@@ -1,14 +1,13 @@
-import { useNavigate, useOutletContext } from "@remix-run/react";
+import { useLocation, useNavigate } from "@remix-run/react";
 import { useEffect } from "react";
-import { OutletContext } from "~/types";
 
-export function useProtectedRoute() {
-  const { supabase, session } = useOutletContext<OutletContext>();
+export function useProtectedRoute(session: any) {
   const navigate = useNavigate();
-  
+  const location = useLocation();
+
   useEffect(() => {
-    const userId = localStorage.getItem(session?.user.id);
-    if (userId === null) {
+    const userId = localStorage.getItem(session?.user.id || "");
+    if (userId === null && location.pathname.includes("gpt")) {
       navigate("/");
     }
   }, []);

@@ -1,6 +1,7 @@
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
@@ -9,12 +10,16 @@ import {
   ScrollRestoration,
   useLoaderData,
   useRevalidator,
+  useRouteError,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { createSupabaseServerClient } from "./utils/supabase.server";
 
 import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
+import Navigation from "./components/Navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -37,6 +42,25 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json({ env, session }, { headers: response.headers });
 };
 
+export function ErrorBoundary() {
+  useRouteError();
+  return (
+    <html>
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {/* add the UI you want your users to see */}
+        <FontAwesomeIcon icon={faTriangleExclamation}/>
+        <Link to="/">Go to Login and Dashboard</Link>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
 export default function App() {
   const { env, session } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
@@ -57,7 +81,7 @@ export default function App() {
     });
     if (session?.user) {
       const inputStor = localStorage.getItem(`${session.user.id}`);
-      if (!inputStor) {
+      if (inputStor === null) {
         localStorage.setItem(`${session.user.id}`, "");
       }
     }
@@ -75,7 +99,8 @@ export default function App() {
         <Links />
       </head>
       <body>
-          <Outlet context={{ supabase, session }} />
+        <Navigation context={{ supabase, session }} />
+        <Outlet context={{ supabase, session }} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
