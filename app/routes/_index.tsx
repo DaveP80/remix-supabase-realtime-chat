@@ -10,7 +10,7 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export default function Index() {
-  const { session, supabase } = useOutletContext<OutletContext>();
+  const { session } = useOutletContext<OutletContext>();
 
   return (
     <>

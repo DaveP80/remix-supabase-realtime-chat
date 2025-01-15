@@ -11,21 +11,23 @@ import {
   useLoaderData,
   useRevalidator,
   useRouteError,
+  useRouteLoaderData,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { createSupabaseServerClient } from "./utils/supabase.server";
-
 import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
 import Navigation from "./components/Navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { getCache } from "./utils/redis.server";
+import { createSupabaseServerClient } from "./utils/supabase.server";
+import { getOrCreateSessionId } from "./utils/auth.server";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: any) => {
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL!,
     SUPABASE_PUBLIC_KEY: process.env.SUPABASE_PUBLIC_KEY!,
@@ -38,8 +40,15 @@ export const loader = async ({ request }: LoaderArgs) => {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
-  return json({ env, session }, { headers: response.headers });
+  const { sessionId, getHeaders } = await getOrCreateSessionId(request);
+  console.log(sessionId)
+  let activeGPT = await getCache(`${sessionId}-submit`);
+  if (activeGPT) {
+    throw new Error();
+  }
+  return json({ env, session }, {  headers: {
+    "Set-Cookie": await getHeaders(),
+  },});
 };
 
 export function ErrorBoundary() {
@@ -52,8 +61,7 @@ export function ErrorBoundary() {
         <Links />
       </head>
       <body>
-        {/* add the UI you want your users to see */}
-        <FontAwesomeIcon icon={faTriangleExclamation}/>
+        <FontAwesomeIcon icon={faTriangleExclamation} />
         <Link to="/">Go to Login and Dashboard</Link>
         <Scripts />
       </body>
@@ -64,6 +72,7 @@ export function ErrorBoundary() {
 export default function App() {
   const { env, session } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
+  let routeData = useRouteLoaderData("root");
 
   const [supabase] = useState(() =>
     createBrowserClient(env.SUPABASE_URL, env.SUPABASE_PUBLIC_KEY)

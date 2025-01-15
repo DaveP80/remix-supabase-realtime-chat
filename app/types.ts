@@ -5,10 +5,6 @@ export type OutletContext = {
   session: Session;
 };
 
-type UserData <T> = {
-  user_meta_data: T;
-}
-
 export interface Message {
   id: number;
   content: string;

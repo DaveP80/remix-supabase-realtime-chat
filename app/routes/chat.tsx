@@ -1,9 +1,9 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import { json, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Chat } from "~/components/Chat";
 import type { Message } from "~/types";
-import { protectChatRoute } from "~/utils/auth.server";
+import { getOrCreateSessionId } from "~/utils/auth.server";
 import { createSupabaseServerClient } from "~/utils/supabase.server";
 
 export const meta: V2_MetaFunction = () => {
@@ -16,6 +16,7 @@ export const action = async ({ request }: ActionArgs) => {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const { getHeaders } = await getOrCreateSessionId(request);
 
   const { message, messageId } = Object.fromEntries(await request.formData());
   if (message) {
@@ -26,14 +27,20 @@ export const action = async ({ request }: ActionArgs) => {
   if (messageId) {
     await supabase.from("messages").delete().eq("id", messageId);
   }
-  return json(null, { headers: response.headers });
+  return json(null, {
+    headers: {
+      "Set-Cookie": await getHeaders(),
+    },
+  });
 };
 
 export const loader = async ({ request }: LoaderArgs) => {
-  protectChatRoute(request, "chat");
   const response = new Response();
   const supabase = createSupabaseServerClient({ request, response });
-
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw redirect("/");
+  }
   const { data } = await supabase.from("messages").select("*");
 
   return json({ messages: data ?? [] }, { headers: response.headers });

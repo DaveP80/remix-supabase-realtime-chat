@@ -11,7 +11,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
 
-  const { supabase, session } = useOutletContext<OutletContext>();
+  const { supabase } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
