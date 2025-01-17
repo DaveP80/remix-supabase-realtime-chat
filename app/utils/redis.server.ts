@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 // Create Redis client
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const subscriber_redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 // Example functions for common Redis operations
 export async function setCache(key: string, value: any, ttl?: number) {
     const serialized = JSON.stringify(value);
@@ -16,8 +17,10 @@ export async function getCache<T>(key: string): Promise<T | null> {
     if (!value) return null;
     return JSON.parse(value) as T;
 }
-export { redis };
 
 export async function removeFromCache(key: string) {
     await redis.del(key);
 }
+export { redis };
+
+export { subscriber_redis }

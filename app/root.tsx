@@ -19,9 +19,10 @@ import { createBrowserClient } from "@supabase/auth-helpers-remix";
 import Navigation from "./components/Navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
-import { getCache } from "./utils/redis.server";
+import { getCache, subscriber_redis } from "./utils/redis.server";
 import { createSupabaseServerClient } from "./utils/supabase.server";
 import { getOrCreateSessionId } from "./utils/auth.server";
+import { db } from "./utils/ss.server";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -35,6 +36,8 @@ export const loader = async ({ request }: any) => {
 
   const response = new Response();
 
+  console.log(db);
+
   const supabase = createSupabaseServerClient({ request, response });
 
   const {
@@ -43,7 +46,7 @@ export const loader = async ({ request }: any) => {
   const { sessionId, getHeaders } = await getOrCreateSessionId(request);
   console.log(sessionId)
   let activeGPT = await getCache(`${sessionId}-submit`);
-  if (activeGPT) {
+  if (activeGPT===500) {
     throw new Error();
   }
   return json({ env, session }, {  headers: {

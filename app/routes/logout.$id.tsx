@@ -7,15 +7,15 @@ export async function loader({ request, params }: any) {
   const { sessionId } = await getOrCreateSessionId(request);
   const gptErr = await getCache(`${sessionId}-submit`);
   if (gptErr) {
-    await setCache(`${sessionId}-submit`, false, 3600);
-    throw new Error();
+    await setCache(`${sessionId}-submit`, 500, 3600);
+    throw redirect("/");
+    //throw new Error();
   }
   
   if (!id) {
     throw new Response("Missing ID parameter", { status: 400 });
   } else {
       throw redirect("/");
-
   }
 }
 
