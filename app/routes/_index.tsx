@@ -1,4 +1,4 @@
-import type { V2_MetaFunction } from "@remix-run/node";
+import type { MetaFunction } from "@remix-run/node";
 import {
   useOutletContext,
 } from "@remix-run/react";
@@ -6,7 +6,7 @@ import { Login } from "~/components/Login";
 import gptImage from "~/gptlogo.jpeg";
 import { OutletContext } from "~/types";
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: "Remix Supabase Realtime Chat" }];
 };
 

@@ -1,9 +1,7 @@
-import { NavLink, useNavigate } from "@remix-run/react";
-import { handleLogout } from "~/hooks/chat";
+import { Form, NavLink, useNavigate } from "@remix-run/react";
 
 export default function Navigation({ context }: any) {
-  const navigate = useNavigate();
-  const { supabase, session } = context;
+  const { session } = context;
   return (
     <nav className="bg-gray-800 p-4">
       <ul className="flex space-x-6">
@@ -37,14 +35,15 @@ export default function Navigation({ context }: any) {
             Google Chat
           </NavLink>
         </li>
-        { session?.user ? (
+        {session?.user ? (
           <li>
-            <button
-              className="btn btn-xs btn-error"
-              onClick={() => handleLogout(supabase, session, navigate)}
+            <Form
+              id="logoutForm"
+              action={`/logout/${session.user.id}`}
+              method="post"
             >
-              Logout
-            </button>
+              <button type="submit" className="btn btn-xs btn-error">Logout</button>
+            </Form>
           </li>
         ) : (
           <div className=""></div>

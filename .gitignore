@@ -6,3 +6,7 @@ node_modules
 .env
 client_secret*
 *.DS_Store
+notes.txt
+credentials.json
+Dockerfile
+.github

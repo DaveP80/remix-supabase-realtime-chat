@@ -1,9 +1,9 @@
-import { type LoaderArgs, json, redirect } from "@remix-run/node";
-import { useActionData, useFetcher, useLoaderData } from "@remix-run/react";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import { useFetcher, useLoaderData, useNavigate, useOutletContext } from "@remix-run/react";
+import { useEffect } from "react";
 import { GPTChat } from "~/components/GPTChat";
-import type { ActionReturnType, GPTMessage } from "~/types";
+import { OutletContext, type ActionReturnType, type GPTMessage } from "~/types";
 import { getOrCreateSessionId } from "~/utils/auth.server";
-import { setCache } from "~/utils/redis.server";
 import { generateSummary } from "~/utils/summarizer.server";
 import { createSupabaseServerClient } from "~/utils/supabase.server";
 
@@ -15,7 +15,7 @@ export async function action({
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const { sessionId, getHeaders } = await getOrCreateSessionId(request);
+  const { getHeaders } = await getOrCreateSessionId(request);
   const { gpt_message, messageId } = Object.fromEntries(
     await request.formData()
   );
@@ -29,13 +29,13 @@ export async function action({
           { content: gpt_message, user_id: session?.user.id, is_gpt: false },
           { content: summary, user_id: session?.user.id, is_gpt: true },
         ]);
-        return json({ summary, gpt_message }, {
+        return Response.json({ summary, gpt_message }, {
           headers: {
             "Set-Cookie": await getHeaders(),
           },
         });
       } else {
-        return json(
+        return Response.json(
           { summary: null, gpt_message },
           {
             headers: {
@@ -47,7 +47,7 @@ export async function action({
     }
     if (messageId) {
       await supabase.from("gpt_messages").delete().eq("id", messageId);
-      return json(null, {
+      return Response.json(null, {
         headers: {
           "Set-Cookie": await getHeaders(),
         },
@@ -56,14 +56,14 @@ export async function action({
   } catch (e) {
     console.log(e);
   }
-  return json({ summary: "error", gpt_message }, {
+  return Response.json({ summary: "error", gpt_message }, {
     headers: {
       "Set-Cookie": await getHeaders(),
     },
   });
 }
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const response = new Response();
   const supabase = createSupabaseServerClient({ request, response });
   const { data: { session } } = await supabase.auth.getSession();
@@ -72,14 +72,20 @@ export const loader = async ({ request }: LoaderArgs) => {
   }
   const { data } = await supabase.from("gpt_messages").select("*").eq("user_id", session.user.id);
 
-  return json({ gpt_messages: data ?? [] }, { headers: response.headers });
+  return Response.json({ gpt_messages: data ?? [] }, { headers: response.headers });
 };
 
 const Index = () => {
-  const {data: actionData} = useFetcher<typeof action>();
+  const { data: actionData } = useFetcher<typeof action>();
   const { gpt_messages } = useLoaderData<typeof loader>();
   const summary = actionData?.summary;
   const gpt_message = actionData?.gpt_message;
+  const navigate = useNavigate();
+  const { session } = useOutletContext<OutletContext>();
+
+  useEffect(() => {
+    if (!session) navigate("/");
+  }, []);
 
   return (
     <div className="container mx-auto md:w-[800px] h-screen">

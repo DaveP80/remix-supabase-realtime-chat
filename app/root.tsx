@@ -1,5 +1,3 @@
-import type { LinksFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import {
   Link,
   Links,
@@ -13,17 +11,13 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
 import Navigation from "./components/Navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { createSupabaseServerClient } from "./utils/supabase.server";
 import { getOrCreateSessionId } from "./utils/auth.server";
-
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet },
-];
+import "./tailwind.css"
 
 export const loader = async ({ request }: any) => {
   const env = {
@@ -32,18 +26,18 @@ export const loader = async ({ request }: any) => {
   };
 
   const response = new Response();
-
   const supabase = createSupabaseServerClient({ request, response });
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   const { sessionId, getHeaders } = await getOrCreateSessionId(request);
   console.log(sessionId)
-  return json({ env, session }, {  headers: {
-    "Set-Cookie": await getHeaders(),
-  },});
+  return Response.json({ env, session }, {
+    headers: {
+      "Set-Cookie": await getHeaders(),
+    },
+  });
 };
 
 export function ErrorBoundary() {
@@ -71,7 +65,6 @@ export default function App() {
   const [supabase] = useState(() =>
     createBrowserClient(env.SUPABASE_URL, env.SUPABASE_PUBLIC_KEY)
   );
-
   const serverAccessToken = session?.access_token;
 
   useEffect(() => {

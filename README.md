@@ -32,38 +32,34 @@ netlify init
 ## Development
 
 The Remix dev server starts your app in development mode, rebuilding assets on file changes. To start the Remix dev server:
-```bash
-brew install redis
-```
+
 ```sh
 npm run dev
 ```
 
-Open up [http://localhost:3000](http://localhost:3000), and you should be ready to go!
-
-The Netlify CLI builds a production version of your Remix App Server and splits it into Netlify Functions that run locally. This includes any custom Netlify functions you've developed. The Netlify CLI runs all of this in its development mode.
-
-```sh
-netlify dev
-```
-
-Open up [http://localhost:3000](http://localhost:3000), and you should be ready to go!
-
-Note: When running the Netlify CLI, file changes will rebuild assets, but you will not see the changes to the page you are on unless you do a browser refresh of the page. Due to how the Netlify CLI builds the Remix App Server, it does not support hot module reloading.
-
 ## Deployment
 
-There are two ways to deploy your app to Netlify, you can either link your app to your git repo and have it auto deploy changes to Netlify, or you can deploy your app manually. If you've followed the setup instructions already, all you need to do is run this:
+I recommend Google Cloud Run, since the package json and the remix config is setup with remix-run/serve to make it good to go.
+This video explains how to deploy using your terminal:
+https://youtu.be/eemS-UTjdb0?si=2YJe8yiZsodQGxEn
 
-```sh
-# preview deployment
-netlify deploy --build
+- To Get gcloud: [gcloud tar](https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-darwin-arm.tar.gz)
 
-# production deployment
-netlify deploy --build --prod
+```bash
+gcloud auth login
+gcloud config set project <PROJECT_ID>
 ```
 
 ## Notes
-- Transformers local LLM is used to make the GPT chat route. Redis I added to project to help with more advanced server behavior. Right now the Redis, and the `__session` cookie I added don't do a whole lot, but it is in development to help with handling possible server errors.
+
+- Transformers local LLM is used to make the GPT chat route. The `__session` cookie I added doesnt do a whole lot, but it is in development to help with handling possible server errors.
+
+## Environment Variables
+
+SUPABASE_URL=
+SUPABASE_PUBLIC_KEY=
+REQ_COOKIE=
+VITE_API_URL=
+DOMAIN_URL=
 
 <details>Author: David Paquette</details>
