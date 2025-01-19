@@ -1,6 +1,7 @@
-import type { LinksFunction, LoaderArgs } from "@remix-run/node";
+import type { LinksFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
@@ -9,18 +10,22 @@ import {
   ScrollRestoration,
   useLoaderData,
   useRevalidator,
+  useRouteError,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { createSupabaseServerClient } from "./utils/supabase.server";
-
 import stylesheet from "~/tailwind.css";
 import { createBrowserClient } from "@supabase/auth-helpers-remix";
+import Navigation from "./components/Navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { createSupabaseServerClient } from "./utils/supabase.server";
+import { getOrCreateSessionId } from "./utils/auth.server";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: any) => {
   const env = {
     SUPABASE_URL: process.env.SUPABASE_URL!,
     SUPABASE_PUBLIC_KEY: process.env.SUPABASE_PUBLIC_KEY!,
@@ -34,8 +39,30 @@ export const loader = async ({ request }: LoaderArgs) => {
     data: { session },
   } = await supabase.auth.getSession();
 
-  return json({ env, session }, { headers: response.headers });
+  const { sessionId, getHeaders } = await getOrCreateSessionId(request);
+  console.log(sessionId)
+  return json({ env, session }, {  headers: {
+    "Set-Cookie": await getHeaders(),
+  },});
 };
+
+export function ErrorBoundary() {
+  useRouteError();
+  return (
+    <html>
+      <head>
+        <title>Oh no!</title>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <FontAwesomeIcon icon={faTriangleExclamation} />
+        <Link to="/">Go to Login and Dashboard</Link>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
 
 export default function App() {
   const { env, session } = useLoaderData<typeof loader>();
@@ -57,7 +84,7 @@ export default function App() {
     });
     if (session?.user) {
       const inputStor = localStorage.getItem(`${session.user.id}`);
-      if (!inputStor) {
+      if (inputStor === null) {
         localStorage.setItem(`${session.user.id}`, "");
       }
     }
@@ -75,7 +102,8 @@ export default function App() {
         <Links />
       </head>
       <body>
-          <Outlet context={{ supabase, session }} />
+        <Navigation context={{ supabase, session }} />
+        <Outlet context={{ supabase, session }} />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

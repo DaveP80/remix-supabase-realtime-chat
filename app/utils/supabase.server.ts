@@ -7,7 +7,7 @@ export const createSupabaseServerClient = ({
   request: Request;
   response: Response;
 }) =>
-  createServerClient(
+   createServerClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_PUBLIC_KEY!,
     { request, response }

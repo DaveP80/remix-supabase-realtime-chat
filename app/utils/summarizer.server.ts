@@ -15,7 +15,7 @@ export async function generateSummary(prompt: FormDataEntryValue) {
   const model = await initializeSummarizer();
 
   const messages = [
-    { role: "system", content: "You are a helpful assistant." },
+    { role: "system", content: "You are Qwen, created by Alibaba Cloud. You are a helpful assistant." },
     { role: "user", content:  prompt },
   ];
 

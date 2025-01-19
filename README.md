@@ -32,7 +32,9 @@ netlify init
 ## Development
 
 The Remix dev server starts your app in development mode, rebuilding assets on file changes. To start the Remix dev server:
-
+```bash
+brew install redis
+```
 ```sh
 npm run dev
 ```
@@ -60,3 +62,8 @@ netlify deploy --build
 # production deployment
 netlify deploy --build --prod
 ```
+
+## Notes
+- Transformers local LLM is used to make the GPT chat route. Redis I added to project to help with more advanced server behavior. Right now the Redis, and the `__session` cookie I added don't do a whole lot, but it is in development to help with handling possible server errors.
+
+<details>Author: David Paquette</details>

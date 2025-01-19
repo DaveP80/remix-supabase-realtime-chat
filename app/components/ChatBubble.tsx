@@ -60,9 +60,8 @@ export const ChatBubble = ({ message, isGrouped = false }: ChatBubbleProps) => {
         </div>
       )}
       <div
-        className={`chat-bubble ${
-          isCurrentUser ? "chat-bubble-primary" : "bg-slate-500"
-        }`}
+        className={`chat-bubble ${isCurrentUser ? "chat-bubble-primary" : "bg-slate-500"
+          }`}
       >
         {message.content}
       </div>

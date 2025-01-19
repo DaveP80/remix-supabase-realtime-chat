@@ -1,5 +1,5 @@
-import { Form, useOutletContext } from "@remix-run/react";
-import { useContext, useEffect, useRef, useState } from "react";
+import { Form, useFetcher, useOutletContext } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import type { GPTMessage, OutletContext } from "~/types";
 import { GPTChatBubble } from "./GPTChatBubble";
 
@@ -20,6 +20,7 @@ export const GPTChat = ({
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  let fetcher = useFetcher();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -61,8 +62,8 @@ export const GPTChat = ({
   useEffect(() => {
     if (!messages.find((item) => item.id == -1)) {
       setIsDisabled(false);
-      const ch = localStorage?.getItem(`${session.user.id}`);
-      setInputValue(ch);
+      const ch = localStorage?.getItem(`${session?.user.id}`);
+      setInputValue(ch || "");
     }
   }, [messages]);
 
@@ -80,29 +81,32 @@ export const GPTChat = ({
 
     setUserHasScrolled(!isScrolledToBottom);
   };
-
+  const sortedMessages = messages.sort(
+    //@ts-expect-error
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col my-1">
       <div
         className="flex flex-col flex-grow h-0 p-4 overflow-auto bg-blue-50 rounded-md"
         ref={chatContainerRef}
         onScroll={handleScroll}
       >
-        {messages.map((message, idx) => (
+        {sortedMessages.map((message, idx) => (
           <GPTChatBubble
             message={message}
             key={message?.id}
             isGrouped={
-              message.user_id === messages[idx - 1]?.user_id &&
+              message.user_id === sortedMessages[idx - 1]?.user_id &&
               new Date(message.created_at).getTime() -
-                new Date(messages[idx - 1]?.created_at).getTime() <
+                new Date(sortedMessages[idx - 1]?.created_at).getTime() <
                 60000
             }
           />
         ))}
       </div>
       <div className="mt-auto mb-5 py-2">
-        <Form
+        <fetcher.Form
           method="post"
           action="/gpt"
           ref={formRef}
@@ -113,13 +117,13 @@ export const GPTChat = ({
             }
             e.preventDefault();
             const userData =
-              messages.length > 1 &&
-              messages.find((item) => item?.user_id)?.user_id;
+              sortedMessages.length > 1 &&
+              sortedMessages.find((item) => item?.user_id)?.user_id;
             formRef.current?.submit();
             formRef.current?.reset();
             setInputValue("");
             setMessages([
-              ...messages,
+              ...sortedMessages,
               {
                 content: inputValue,
                 created_at: new Date().toString(),
@@ -141,7 +145,7 @@ export const GPTChat = ({
             onChange={(e) => setInputValue(e.target.value)}
             value={inputValue}
           />
-        </Form>
+        </fetcher.Form>
       </div>
     </div>
   );

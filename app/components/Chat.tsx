@@ -11,7 +11,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
   const [messages, setMessages] = useState(serverMessages);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
 
-  const { supabase, session } = useOutletContext<OutletContext>();
+  const { supabase } = useOutletContext<OutletContext>();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +63,7 @@ export const Chat = ({ messages: serverMessages }: ChatProps) => {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col my-1">
       <div
         className="flex flex-col flex-grow h-0 p-4 overflow-auto bg-blue-50 rounded-md"
         ref={chatContainerRef}

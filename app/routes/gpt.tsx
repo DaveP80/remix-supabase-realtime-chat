@@ -1,29 +1,25 @@
-import { type LoaderArgs, json } from "@remix-run/node";
-import {
-  useActionData,
-  useLoaderData,
-  useNavigate,
-  useOutletContext,
-} from "@remix-run/react";
-import { redirect, type ActionFunctionArgs } from "react-router";
+import { type LoaderArgs, json, redirect } from "@remix-run/node";
+import { useActionData, useFetcher, useLoaderData } from "@remix-run/react";
 import { GPTChat } from "~/components/GPTChat";
-import { Login } from "~/components/Login";
-import { handleLogout, handleNavigate } from "~/hooks/chat";
-import type { ActionReturnType, GPTMessage, OutletContext } from "~/types";
+import type { ActionReturnType, GPTMessage } from "~/types";
+import { getOrCreateSessionId } from "~/utils/auth.server";
+import { setCache } from "~/utils/redis.server";
 import { generateSummary } from "~/utils/summarizer.server";
 import { createSupabaseServerClient } from "~/utils/supabase.server";
 
 export async function action({
-  request,
-}: ActionFunctionArgs): Promise<ActionReturnType> {
+  request
+}: any): Promise<ActionReturnType> {
   const response = new Response();
   const supabase = createSupabaseServerClient({ request, response });
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const { sessionId, getHeaders } = await getOrCreateSessionId(request);
   const { gpt_message, messageId } = Object.fromEntries(
     await request.formData()
   );
+  //GPT prompts and response will take a lot of time.
   // Check if chart_data exists in form data
   try {
     if (gpt_message) {
@@ -33,73 +29,64 @@ export async function action({
           { content: gpt_message, user_id: session?.user.id, is_gpt: false },
           { content: summary, user_id: session?.user.id, is_gpt: true },
         ]);
-        return json({ summary, gpt_message }, { headers: response.headers });
+        return json({ summary, gpt_message }, {
+          headers: {
+            "Set-Cookie": await getHeaders(),
+          },
+        });
       } else {
         return json(
           { summary: null, gpt_message },
-          { headers: response.headers }
+          {
+            headers: {
+              "Set-Cookie": await getHeaders(),
+            },
+          }
         );
       }
     }
     if (messageId) {
       await supabase.from("gpt_messages").delete().eq("id", messageId);
-      return json(null, { headers: response.headers });
+      return json(null, {
+        headers: {
+          "Set-Cookie": await getHeaders(),
+        },
+      });
     }
   } catch (e) {
     console.log(e);
   }
-  return json({ summary: "error", gpt_message }, { headers: response.headers });
+  return json({ summary: "error", gpt_message }, {
+    headers: {
+      "Set-Cookie": await getHeaders(),
+    },
+  });
 }
 
 export const loader = async ({ request }: LoaderArgs) => {
   const response = new Response();
   const supabase = createSupabaseServerClient({ request, response });
-
-  const { data } = await supabase.from("gpt_messages").select("*");
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+  const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     throw redirect("/");
   }
+  const { data } = await supabase.from("gpt_messages").select("*").eq("user_id", session.user.id);
 
   return json({ gpt_messages: data ?? [] }, { headers: response.headers });
 };
 
 const Index = () => {
-  const actionData = useActionData<typeof action>();
+  const {data: actionData} = useFetcher<typeof action>();
   const { gpt_messages } = useLoaderData<typeof loader>();
-  const { session, supabase } = useOutletContext<OutletContext>();
   const summary = actionData?.summary;
   const gpt_message = actionData?.gpt_message;
-  const navigate = useNavigate();
+
   return (
     <div className="container mx-auto md:w-[800px] h-screen">
-      {!session?.user ? (
-        <Login />
-      ) : (
-        <>
-          <div className="my-2 flex space-x-1">
-            <button
-              className="btn btn-xs btn-error"
-              onClick={() => handleLogout(supabase, session, navigate)}
-            >
-              Logout
-            </button>
-            <button
-              className="btn btn-xs btn-error"
-              onClick={() => handleNavigate(navigate, "")}
-            >
-              Chatting
-            </button>
-          </div>
-          <GPTChat
-            messages={gpt_messages as GPTMessage[]}
-            message_log={summary && gpt_message}
-          ></GPTChat>
-        </>
-      )}
+      <GPTChat
+        messages={gpt_messages as GPTMessage[]}
+        message_log={summary && gpt_message}
+      ></GPTChat>
     </div>
   );
 };
