@@ -1,4 +1,4 @@
-import { Form, useOutletContext } from "@remix-run/react";
+import { Form, useFetcher, useOutletContext } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { GPTMessage, OutletContext } from "~/types";
 import { GPTChatBubble } from "./GPTChatBubble";
@@ -20,6 +20,7 @@ export const GPTChat = ({
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  let fetcher = useFetcher();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -105,7 +106,7 @@ export const GPTChat = ({
         ))}
       </div>
       <div className="mt-auto mb-5 py-2">
-        <Form
+        <fetcher.Form
           method="post"
           action="/gpt"
           ref={formRef}
@@ -144,7 +145,7 @@ export const GPTChat = ({
             onChange={(e) => setInputValue(e.target.value)}
             value={inputValue}
           />
-        </Form>
+        </fetcher.Form>
       </div>
     </div>
   );

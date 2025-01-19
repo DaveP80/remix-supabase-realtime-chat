@@ -1,5 +1,5 @@
 import { type LoaderArgs, json, redirect } from "@remix-run/node";
-import { useActionData, useLoaderData } from "@remix-run/react";
+import { useActionData, useFetcher, useLoaderData } from "@remix-run/react";
 import { GPTChat } from "~/components/GPTChat";
 import type { ActionReturnType, GPTMessage } from "~/types";
 import { getOrCreateSessionId } from "~/utils/auth.server";
@@ -20,7 +20,6 @@ export async function action({
     await request.formData()
   );
   //GPT prompts and response will take a lot of time.
-  gpt_message && await setCache(`${sessionId}-submit`, true, 3600);
   // Check if chart_data exists in form data
   try {
     if (gpt_message) {
@@ -30,7 +29,6 @@ export async function action({
           { content: gpt_message, user_id: session?.user.id, is_gpt: false },
           { content: summary, user_id: session?.user.id, is_gpt: true },
         ]);
-        await setCache(`${sessionId}-submit`, false, 3600);
         return json({ summary, gpt_message }, {
           headers: {
             "Set-Cookie": await getHeaders(),
@@ -72,13 +70,13 @@ export const loader = async ({ request }: LoaderArgs) => {
   if (!session) {
     throw redirect("/");
   }
-  const { data } = await supabase.from("gpt_messages").select("*");
+  const { data } = await supabase.from("gpt_messages").select("*").eq("user_id", session.user.id);
 
   return json({ gpt_messages: data ?? [] }, { headers: response.headers });
 };
 
 const Index = () => {
-  const actionData = useActionData<typeof action>();
+  const {data: actionData} = useFetcher<typeof action>();
   const { gpt_messages } = useLoaderData<typeof loader>();
   const summary = actionData?.summary;
   const gpt_message = actionData?.gpt_message;
